@@ -328,9 +328,9 @@ if(a==='close'){if(e.target.classList.contains('modal'))close();return}
 if(a==='cam'){if(need())camModal()}if(a==='allow')allow();if(a==='newtab')window.open(location.href,'_blank');if(a==='tab'){V.tab=t.dataset.t;render()}if(a==='snap')snap();
 if(a==='xc')close();if(a==='lbx')close();if(a==='lbdl')dlImg();
 if(a==='yes'){const fn=AF;AF=null;close();if(fn)fn()}
-if(a==='del'){const p=db.posts.find(x=>x.id===id);if(!p||p.uid!==db.me)return;ask('¿Eliminar esta publicación?',()=>{db.posts=db.posts.filter(x=>x.id!==id);if(p.m)mdel(p.m.id);V.p=null;save();render();toast('Publicación eliminada')})}
+if(a==='del'){const p=db.posts.find(x=>x.id===id);if(!p||p.uid!==db.me)return;ask('¿Eliminar esta publicación permanentemente?',async()=>{try{if(CLOUD)await sb('/rest/v1/rpc/delete_own_content',{m:'POST',body:{p_id:id}});db.posts=db.posts.filter(x=>x.id!==id);if(p.m)await mdel(p.m.id);V.p=null;save();render();toast('Publicación eliminada permanentemente')}catch(e){toast('No se pudo eliminar: '+msgES(e))}})}
 if(a==='cdel'){const p=db.posts.find(x=>x.id===id),i=+t.dataset.i;if(!p||!p.cm[i]||p.cm[i].uid!==db.me)return;ask('¿Eliminar este comentario?',()=>{p.cm.splice(i,1);save();render();toast('Comentario eliminado')})}
-if(a==='sdel'){const s=(db.stories||[]).find(x=>x.id===id);if(!s||s.uid!==db.me)return;clearTimeout(STM);SV=null;ask('¿Eliminar esta historia?',()=>{db.stories=db.stories.filter(x=>x.id!==id);mdel(s.m.id);save();render();toast('Historia eliminada')})}
+if(a==='sdel'){const s=(db.stories||[]).find(x=>x.id===id);if(!s||s.uid!==db.me)return;clearTimeout(STM);SV=null;ask('¿Eliminar esta historia permanentemente?',async()=>{try{if(CLOUD)await sb('/rest/v1/rpc/delete_own_content',{m:'POST',body:{p_id:id}});db.stories=db.stories.filter(x=>x.id!==id);if(s.m)await mdel(s.m.id);save();render();toast('Historia eliminada permanentemente')}catch(e){toast('No se pudo eliminar: '+msgES(e))}})}
 if(a==='chat'){if(!need())return;V.chat=true;V.cid=null;V.p=null;V.pf=null;V.cfg=null;render();scrollTo(0,0)}
 if(a==='copen'){V.cid=id;render()}
 if(a==='cback'){V.cid=null;render()}
