@@ -177,6 +177,45 @@ button[disabled],input[disabled]{opacity:.5;cursor:not-allowed}
 .srow>.ic{color:var(--mut);flex:none}
 .gone{background:var(--in);color:var(--mut);padding:22px 14px;text-align:center;font-size:13px;margin-top:8px;border-radius:10px}
 .px .gone{margin:0 14px 10px}
+
+/* ===== Ajustes finales para celular ===== */
+html,body{overflow-x:hidden;-webkit-text-size-adjust:100%}
+.wrap>main,.wrap>aside{min-width:0}
+@media(max-width:800px){
+header{padding:8px 12px;gap:8px;row-gap:8px}
+.logo{gap:8px;min-width:0}.badge{width:34px;height:34px;border-radius:9px;font-size:14px}
+.logo b{font-size:15px;white-space:nowrap}
+header .gear[data-a="chat"]{display:none}
+.gear{padding:6px 8px;font-size:18px}
+.search input{padding:9px 14px;border-radius:22px}
+.wrap{margin:10px auto;padding:0 10px;gap:0}
+.card{border-radius:16px}
+.stories{padding:10px;gap:10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stories::-webkit-scrollbar,.chips::-webkit-scrollbar{display:none}
+.bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:4px;padding:8px}.bar::-webkit-scrollbar{display:none}
+.tab{white-space:nowrap;flex:none;padding:8px 12px}
+.ph{padding:10px 12px;gap:10px}
+.pn{flex:1}.pn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pn small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fl{flex:none;padding:6px 12px;font-size:12px}
+.px .media img{max-height:75vh}.px .media video{max-height:70vh;width:100%}
+.act{padding:8px 12px;gap:6px;flex-wrap:wrap}.cap{padding:0 12px 12px}
+.ib,.vp button{min-height:36px}
+.pf .pfi .row,.pfi .row{justify-content:center}
+.pgrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+.grid{gap:4px}
+.srow{padding:12px 6px}
+.chat{height:calc(100dvh - 190px);min-height:300px;border-radius:16px}
+.mg{max-width:88%}
+.cin{padding:8px;gap:6px}.cin input{min-width:0}
+.crow{padding:12px 4px}
+.box{max-height:88dvh}
+.row .bp,.row .bb,.row .bo{flex:1 1 auto}
+.nt{width:calc(100vw - 16px)}
+.sc{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#bn{padding-left:2px;padding-right:2px}
+#bn button{flex:1;padding:4px 2px;min-height:0}
+#bn button.c{flex:none;margin-left:6px;margin-right:6px}
+}
+@media(max-width:380px){.logo b{font-size:14px}.pn small{display:none}.act .ib{padding:5px 9px}}
 </style></head><body><div id="wp"></div>
 <header>
 <div class="logo" data-a="home"><div class="badge">FP</div><div><b>Foro Peynado</b><small>Foro estudiantil</small></div></div>
@@ -223,7 +262,7 @@ M.innerHTML=`<button class="ghost" data-a="back">← Volver</button>${postHTML(p
 ${p.cm.map((c,ci)=>{if(c.uid&&isBl(c.uid))return '';const u=usr(c.uid);return `<div class="cm"><div class="meta">${av(c.g?{name:c.g,av:''}:u,'s')}<b style="color:var(--tx)">${ct(c.g||u.name)}</b>${c.uid?'':' <span class="tag" style="background:var(--b);color:var(--bt)">invitado</span>'} · hace ${ago(c.ts)}${db.me&&c.uid===db.me?` · <span class="lnk" style="color:#e5484d" data-a="cdel" data-id="${p.id}" data-i="${ci}">Eliminar</span>`:''}</div><p>${ct(c.t)}</p></div>`}).join('')}</div>`;return}
 let L=db.posts.filter(p=>Object.keys(p.r||{}).length<3&&!isBl(p.uid)&&(V.c==='Todos'||p.c===V.c)&&(!V.q||(p.t+p.b).toLowerCase().includes(V.q.toLowerCase())));
 L.sort((a,b)=>V.s==='top'?score(b)-score(a):b.ts-a.ts);
-M.innerHTML=chipsH()+storiesH()+`<div class="card bar"><button class="tab ${V.s==='new'?'on':''}" data-a="sort" data-s="new">Nuevos</button><button class="tab ${V.s==='top'?'on':''}" data-a="sort" data-s="top">Más votados</button><span class="meta" style="margin-left:auto">${V.c==='Todos'?'Todas las comunidades':V.c}</span></div>`+(L.map(p=>postHTML(p)).join('')||'<div class="card empty">Aún no hay publicaciones aquí. ¡Sé el primero!</div>')}
+M.innerHTML=chipsH()+storiesH()+`<div class="card bar"><button class="tab ${V.s==='new'?'on':''}" data-a="sort" data-s="new">Nuevos</button><button class="tab ${V.s==='top'?'on':''}" data-a="sort" data-s="top">Más votados</button><span class="meta" style="margin-left:auto">${V.c==='Todos'?'Todas las comunidades':V.c}</span></div>`+(L.map(p=>{try{return postHTML(p)}catch(e){console.warn('publicación omitida',p&&p.id,e);return ''}}).join('')||'<div class="card empty">Aún no hay publicaciones aquí. ¡Sé el primero!</div>')}
 function authForm(reg){modal(`<h2>${reg?'Crear cuenta':'Iniciar sesión'}</h2><form id="af" data-reg="${reg?1:0}">
 ${CLOUD&&!reg?'<label>Correo</label><input name="e" type="email" required autocomplete="email">':'<label>Usuario</label><input name="n" required maxlength="20" autocomplete="username">'}
 ${reg?'<label>Correo</label><input name="e" type="email" required>':''}
@@ -553,12 +592,12 @@ function mediaSweep(){[...db.posts,...(db.stories||[])].forEach(x=>{if(x.m&&mexp
 setInterval(()=>{if(!CLOUD)mediaSweep()},36e5);
 /*CLOUD-START*/
 const SBU='https://reyyjgzieyqdtxfkfllp.supabase.co',SBK='sb_publishable_XR5_4gJ1knSfOYoNIVSKCg_TB2y3ah4';
-let SES=null,STORE={},SINCE='1970-01-01T00:00:00Z',SH={},DIRTY=false,PUSHING=false,STALE=false,OBJ={};
+let BOOTED=false,SES=null,STORE={},SINCE='1970-01-01T00:00:00Z',SH={},DIRTY=false,PUSHING=false,STALE=false,OBJ={};
 async function sb(path,o={}){const h={apikey:SBK,...(o.h||{})},tok=await tkn();if(tok)h.Authorization='Bearer '+tok;
 let body;if(o.body instanceof Blob)body=o.body;else if(o.body!==undefined){body=JSON.stringify(o.body);h['Content-Type']='application/json'}
-const r=await fetch(SBU+path,{method:o.m||'GET',headers:h,body});let j=null;try{j=await r.json()}catch(e){}
+const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),body instanceof Blob?18e4:12e3);let r;try{r=await fetch(SBU+path,{method:o.m||'GET',headers:h,body,signal:ac.signal})}catch(e){throw new Error(e&&e.name==='AbortError'?'El servidor tardó demasiado en responder.':'Sin conexión con el servidor.')}finally{clearTimeout(tm)}let j=null;try{j=await r.json()}catch(e){}
 if(!r.ok){const x=new Error((j&&(j.msg||j.message||j.error_description||j.error))||('HTTP '+r.status));x.status=r.status;x.j=j;throw x}return j}
-async function tkn(){if(!SES)return null;if(SES.exp-Date.now()/1e3<60){try{const r=await fetch(SBU+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SBK,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:SES.rt})});const j=await r.json();if(r.ok)setSes(j);else if(r.status<500)dropSes()}catch(e){}}return SES?SES.at:null}
+async function tkn(){if(!SES)return null;if(SES.exp-Date.now()/1e3<60){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),8e3);const r=await fetch(SBU+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SBK,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:SES.rt}),signal:ac.signal});clearTimeout(tm);const j=await r.json();if(r.ok)setSes(j);else if(r.status<500)dropSes()}catch(e){}}return SES?SES.at:null}
 function setSes(j){SES={at:j.access_token,rt:j.refresh_token,exp:j.expires_at||Math.floor(Date.now()/1e3)+(j.expires_in||3600),u:j.user||(SES&&SES.u)};try{localStorage.setItem('fps',JSON.stringify(SES))}catch(e){}db.me=SES.u?SES.u.id:null}
 function dropSes(){SES=null;try{localStorage.removeItem('fps')}catch(e){}db.me=null}
 function msgES(e){const m=String(e&&e.message||e);const T=[[/invalid login/i,'Correo o contraseña incorrectos.'],[/already registered|already been registered/i,'Ese correo ya tiene una cuenta.'],[/not confirmed/i,'Confirma tu correo primero (revisa tu bandeja).'],[/at least 6|weak/i,'La contraseña es muy débil (mínimo 6 caracteres).'],[/rate limit|too many|429/i,'Demasiados intentos. Espera un momento.'],[/valid email|invalid email/i,'Escribe un correo válido.'],[/failed to fetch|network/i,'Sin conexión con el servidor.']];for(const [r,t] of T)if(r.test(m))return t;return m}
@@ -628,13 +667,19 @@ document.querySelectorAll('#main input[id],#main textarea[id]').forEach(e=>{if(!
 render();for(const k in keep){const e=document.getElementById(k);if(e&&!e.value)e.value=keep[k]}
 if(aid){const f=document.getElementById(aid);if(f&&f.focus){f.focus();try{if(val!=null)f.setSelectionRange(val.length,val.length)}catch(e){}}}checkNotif()}
 async function tick(){if(!CLOUD||document.hidden||PUSHING||DIRTY)return;try{const n=await pull();if(PUSHING||DIRTY){STALE=true;return}if(n||STALE){STALE=false;rebuild();snap();rerender()}}catch(e){}}
-async function boot(){let ok=false;try{const c=new AbortController();setTimeout(()=>c.abort(),4000);const r=await fetch(SBU+'/auth/v1/settings',{headers:{apikey:SBK},signal:c.signal});ok=r.ok}catch(e){}
+function showErr(e){console.error(e);const m=$('#main');if(m)m.innerHTML='<div class="card empty"><b>No se pudo mostrar el foro.</b><br><span class="meta">'+esc(String(e&&e.message||e))+'</span><br><br><button class="bp" onclick="location.reload()">Reintentar</button></div>'}
+async function boot(){let ok=false;
+const wd=setTimeout(()=>{if(!BOOTED){BOOTED=true;try{applyCfg();render()}catch(e){showErr(e)}}},9e3);
+try{try{const c=new AbortController();setTimeout(()=>c.abort(),4000);const r=await fetch(SBU+'/auth/v1/settings',{headers:{apikey:SBK},signal:c.signal});ok=r.ok}catch(e){}
 if(ok){CLOUD=true;const o=db;db={users:[],posts:[],stories:[],chats:[],fr:{},blocks:{},subs:{},notif:[],me:null,cens:!!(o&&o.cens),log:(o&&o.log)||{}};
 try{SES=JSON.parse(localStorage.getItem('fps')||'null')}catch(e){}
-if(SES){db.me=SES.u?SES.u.id:null;await tkn();if(!SES)db.me=null}
+try{if(SES){db.me=SES.u?SES.u.id:null;await tkn();if(!SES)db.me=null}}catch(e){console.warn(e)}
 try{await pull();rebuild();snap();if(db.me)await ensureProfile()}catch(e){console.warn(e)}
 janitor();setInterval(janitor,36e5);setInterval(tick,4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()})}
-if(!CLOUD)mediaSweep();applyCfg();applyBg();render();checkNotif()}
+}catch(e){console.error(e)}
+clearTimeout(wd);BOOTED=true;
+try{if(!CLOUD)mediaSweep()}catch(e){}try{applyCfg()}catch(e){}try{applyBg()}catch(e){}
+try{render()}catch(e){return showErr(e)}try{checkNotif()}catch(e){}}
 /*CLOUD-END*/
 
 boot();
