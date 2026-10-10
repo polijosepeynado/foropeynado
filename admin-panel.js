@@ -10,20 +10,29 @@
   const fmt = s => { if (!s) return '—'; const d = new Date(s); return Number.isNaN(+d) ? '—' : d.toLocaleString(); };
   const session = () => { try { return JSON.parse(localStorage.getItem('fps') || 'null'); } catch (_) { return null; } };
   async function token() {
-    let s = session();
-    if (!s) throw new Error('Inicia sesión con la cuenta administradora en Foro Peynado.');
-    if (s.u?.id !== ADMIN_ID || String(s.u?.email || '').toLowerCase() !== ADMIN_EMAIL) throw new Error('Esta sección solo está disponible para la cuenta administradora autorizada.');
-    if (s.exp && s.exp - Date.now()/1000 > 90 && s.at) return s.at;
-    if (!s.rt) throw new Error('La sesión expiró. Cierra sesión e inicia sesión nuevamente.');
-    const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST', headers: {'apikey': KEY, 'Content-Type':'application/json'},
-      body: JSON.stringify({refresh_token:s.rt})
-    });
-    const j = await r.json().catch(()=>({}));
-    if (!r.ok || !j.access_token) throw new Error(j.msg || j.message || 'No se pudo renovar la sesión.');
-    s = {at:j.access_token, rt:j.refresh_token || s.rt, exp:j.expires_at || Math.floor(Date.now()/1000)+(j.expires_in||3600), u:j.user || s.u};
-    localStorage.setItem('fps', JSON.stringify(s));
-    return s.at;
+    const refresh = async () => {
+      let s = session();
+      if (!s) throw new Error('Inicia sesión con la cuenta administradora en Foro Peynado.');
+      if (s.u?.id !== ADMIN_ID || String(s.u?.email || '').toLowerCase() !== ADMIN_EMAIL) throw new Error('Esta sección solo está disponible para la cuenta administradora autorizada.');
+      if (s.exp && s.exp - Date.now()/1000 > 90 && s.at) return s.at;
+      if (!s.rt) throw new Error('La sesión expiró. Cierra sesión e inicia sesión nuevamente.');
+      const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST', headers: {'apikey': KEY, 'Content-Type':'application/json'},
+        body: JSON.stringify({refresh_token:s.rt})
+      });
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok || !j.access_token) {
+        const latest = session();
+        if (latest?.at && latest.exp > Date.now()/1000 && latest.rt !== s.rt) return latest.at;
+        throw new Error(j.msg || j.message || 'No se pudo renovar la sesión.');
+      }
+      s = {at:j.access_token, rt:j.refresh_token || s.rt, exp:j.expires_at || Math.floor(Date.now()/1000)+(j.expires_in||3600), u:j.user || s.u};
+      localStorage.setItem('fps', JSON.stringify(s));
+      return s.at;
+    };
+    return navigator.locks && navigator.locks.request
+      ? navigator.locks.request('fp-auth-refresh', refresh)
+      : refresh();
   }
   async function api(action, extra={}) {
     const t = await token();
