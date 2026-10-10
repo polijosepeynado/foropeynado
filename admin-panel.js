@@ -9,12 +9,16 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = s => { if (!s) return '—'; const d = new Date(s); return Number.isNaN(+d) ? '—' : d.toLocaleString(); };
   const session = () => { try { return JSON.parse(localStorage.getItem('fps') || 'null'); } catch (_) { return null; } };
-  async function token() {
+  async function token(forceRefresh=false) {
     const refresh = async () => {
       let s = session();
       if (!s) throw new Error('Inicia sesión con la cuenta administradora en Foro Peynado.');
+      // El foro principal y este panel comparten el mismo refresh token. Vuelve a leerlo
+      // después de entrar en el bloqueo, porque otra pestaña puede haberlo renovado.
+      const latest = session();
+      if (latest?.at && latest?.rt && (!s.rt || latest.rt !== s.rt || (latest.exp||0) > (s.exp||0))) s = latest;
       if (s.u?.id !== ADMIN_ID || String(s.u?.email || '').toLowerCase() !== ADMIN_EMAIL) throw new Error('Esta sección solo está disponible para la cuenta administradora autorizada.');
-      if (s.exp && s.exp - Date.now()/1000 > 90 && s.at) return s.at;
+      if (!forceRefresh && s.exp && s.exp - Date.now()/1000 > 90 && s.at) return s.at;
       if (!s.rt) throw new Error('La sesión expiró. Cierra sesión e inicia sesión nuevamente.');
       const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
         method: 'POST', headers: {'apikey': KEY, 'Content-Type':'application/json'},
@@ -22,9 +26,9 @@
       });
       const j = await r.json().catch(()=>({}));
       if (!r.ok || !j.access_token) {
-        const latest = session();
-        if (latest?.at && latest.exp > Date.now()/1000 && latest.rt !== s.rt) return latest.at;
-        throw new Error(j.msg || j.message || 'No se pudo renovar la sesión.');
+        const newer = session();
+        if (newer?.at && newer.exp > Date.now()/1000 && newer.rt && newer.rt !== s.rt) return newer.at;
+        throw new Error(j.msg || j.message || j.error_description || 'No se pudo renovar la sesión. Cierra sesión e inicia sesión nuevamente.');
       }
       s = {at:j.access_token, rt:j.refresh_token || s.rt, exp:j.expires_at || Math.floor(Date.now()/1000)+(j.expires_in||3600), u:j.user || s.u};
       localStorage.setItem('fps', JSON.stringify(s));
@@ -35,12 +39,21 @@
       : refresh();
   }
   async function api(action, extra={}) {
-    const t = await token();
-    const r = await fetch(SB + '/functions/v1/admin-panel', {
-      method:'POST', headers:{'apikey':KEY,'Authorization':'Bearer '+t,'Content-Type':'application/json'},
-      body:JSON.stringify({action,...extra})
-    });
-    const j = await r.json().catch(()=>({}));
+    const send = async t => {
+      const r = await fetch(SB + '/functions/v1/admin-panel', {
+        method:'POST', headers:{'apikey':KEY,'Authorization':'Bearer '+t,'Content-Type':'application/json'},
+        body:JSON.stringify({action,...extra})
+      });
+      const j = await r.json().catch(()=>({}));
+      return {r,j};
+    };
+    let t = await token();
+    let {r,j} = await send(t);
+    // Si otra pestaña rotó el refresh token justo antes de la petición, renueva y reintenta una vez.
+    if (r.status === 401) {
+      t = await token(true);
+      ({r,j} = await send(t));
+    }
     if (!r.ok || j.error) throw new Error(j.error || ('Error HTTP '+r.status));
     return j;
   }
@@ -168,7 +181,7 @@
     $('#fpa-ban-type').addEventListener('change',()=>{$('#fpa-ban-until-wrap').style.display=$('#fpa-ban-type').value==='temporary'?'':'none';});
     const cancel=$('[data-action="cancel-ban"]');cancel.addEventListener('click',()=>$('#fpa-ban-form')?.closest('.fpa-card')?.remove());
   }
-  document.addEventListener('click',e=>{const b=e.target.closest('[data-a="pin"]');if(!b)return;e.preventDefault();e.stopPropagation();const id=b.dataset.id,was=b.title==='Desfijar publicación';b.disabled=true;api('moderate_content',{id,pinned:!was}).then(()=>{toast(was?'Publicación desfijada.':'Publicación fijada.');location.reload()}).catch(err=>{toast(err.message||'No se pudo fijar la publicación.',true);b.disabled=false;});},true);
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-a="pin"]');if(!b||b.disabled)return;e.preventDefault();e.stopPropagation();const id=b.dataset.id,was=b.getAttribute('aria-pressed')==='true';b.disabled=true;api('moderate_content',{id,pinned:!was}).then(()=>{toast(was?'Publicación desfijada.':'Publicación fijada.');location.reload()}).catch(err=>{toast(err.message||'No se pudo fijar la publicación.',true);b.disabled=false;});},true);
   document.addEventListener('DOMContentLoaded',install);
   install();
   setInterval(syncButton,2500);
