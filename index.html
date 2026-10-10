@@ -544,7 +544,10 @@ let y=cfg.y,b=cfg.b;
 if(dark){['--bg','--k','--kt','--km','--in','--bd'].forEach(p=>st.removeProperty(p));st.setProperty('--ka',y);st.setProperty('--bl',b)}
 else{y=mx(cfg.y,255,.55);b=mx(cfg.b,255,.5);st.setProperty('--bg',mx(cfg.y,255,.9));st.setProperty('--k',mx(cfg.y,255,.78));st.setProperty('--kt','#2b2b2b');st.setProperty('--km','#5c5c5c');st.setProperty('--ka',mx(cfg.y,0,.45));st.setProperty('--bl',mx(cfg.b,0,.2));st.setProperty('--in',mx(cfg.y,255,.94));st.setProperty('--bd',mx(cfg.y,255,.75))}
 if(dark)st.setProperty('--k','#0d0d0d');
-st.setProperty('--y',y);st.setProperty('--b',b);st.setProperty('--yt',lum(y)>.4?'#000':'#fff');st.setProperty('--bt',lum(b)>.4?'#000':'#fff')}
+/* Ajusta los colores de enlaces/detalles según el tema para mantener contraste. */
+if(dark){st.setProperty('--bl',lum(b)<.35?mx(b,255,.62):b);st.setProperty('--ka',lum(y)<.35?mx(y,255,.62):y);st.setProperty('--mut','#b8b8b8');st.setProperty('--tx','#f5f5f5');}
+else{st.setProperty('--bl',lum(b)>.42?mx(b,0,.42):b);st.setProperty('--ka',lum(y)>.42?mx(y,0,.42):y);st.setProperty('--mut','#555');st.setProperty('--tx','#171717');}
+st.setProperty('--y',y);st.setProperty('--b',b);st.setProperty('--yt',lum(y)>.42?'#000':'#fff');st.setProperty('--bt',lum(b)>.42?'#000':'#fff')}
 const PAL=[['Peynado','#FFC800','#2F80ED'],['Océano','#22D3EE','#1D4ED8'],['Bosque','#84CC16','#15803D'],['Atardecer','#FB923C','#DB2777'],['Violeta','#C084FC','#6D28D9'],['Fuego','#F43F5E','#F59E0B']];
 function cfgV(M){const IC=p=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
 const rows=[['cuenta','Cuenta','Correo, nombre de usuario, foto y contraseña',IC('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>')],
@@ -586,7 +589,7 @@ const out=[];for(const c of L){if(out.every(o=>Math.hypot(o.r-c.r,o.g-c.g,o.b-c.
 return out.map(c=>'#'+[c.r,c.g,c.b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join(''))}
 function pickBg(f){const im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
 c.toBlob(b=>{PEND={url:URL.createObjectURL(b),blob:b,cols:pal5(c)};render()},'image/jpeg',.82)};im.onerror=()=>toast('No se pudo leer la imagen');im.src=URL.createObjectURL(f)}
-function setUi(){const r=document.documentElement;r.toggleAttribute('data-wp',!!cfg.bg);r.style.setProperty('--uip',Math.round((1-cfg.ui)*100)+'%');r.style.setProperty('--uib',cfg.ui>0?'10px':'0px')}
+function setUi(){const r=document.documentElement;r.toggleAttribute('data-wp',!!cfg.bg);/* Conserva suficiente opacidad para que el texto no se mezcle con la foto. */const transparency=Math.min(.28,Math.max(0,Number(cfg.ui)||0));r.style.setProperty('--uip',Math.round((1-transparency)*100)+'%');r.style.setProperty('--uib',cfg.ui>0?'10px':'0px')}
 async function applyBg(){const w=$('#wp');setUi();if(!cfg.bg){w.style.display='none';return}const u=await murl('bg');if(!u){w.style.display='none';document.documentElement.removeAttribute('data-wp');return}
 w.style.backgroundImage=`url("${u}")`;w.style.setProperty('--wd',cfg.wd);w.style.setProperty('--wb',cfg.wb+'px');w.style.display='block'}
 async function setBg(){try{await mput('bg',PEND.blob)}catch(e){return toast('No se pudo guardar la imagen en este navegador')}URLS.delete('bg');cfg.bg=true;saveCfg();await applyBg();render();toast('Fondo aplicado')}
