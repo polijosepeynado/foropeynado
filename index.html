@@ -256,13 +256,14 @@ setTimeout(function(){if(document.getElementById('ld'))show(errs.length?'Error: 
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const C=['General','Estudio','Eventos','Anuncios','Off-topic'];
+const C=['General','🔪puyas','❤️amor/relaciones','🤣burlas','Off-topic'];
+const catName=c=>({'Estudio':'🔪puyas','Eventos':'❤️amor/relaciones','Anuncios':'🤣burlas'}[c]||c);
 const now=Date.now(),H=36e5;
 let db=null;try{db=JSON.parse(localStorage.getItem('fp1')||'null')}catch(e){}
 if(!db)db={users:[{id:'u0',name:'Moderación',email:'',h:'',av:''}],me:null,posts:[
-{id:'p1',uid:'u0',c:'Anuncios',t:'¡Bienvenidos al Foro Peynado! 🎓',b:'Este es el espacio de los estudiantes del Politécnico. Crea tu cuenta, sube tu foto, publica y comenta. Respeta a todos.',ts:now-5*H,v:{},cm:[]},
-{id:'p2',uid:'u0',c:'Estudio',t:'¿Cómo se organizan para estudiar en grupo?',b:'Cuenten sus trucos: horarios, apps, lugares… Todo ayuda antes de los exámenes.',ts:now-3*H,v:{},cm:[]},
-{id:'p3',uid:'u0',c:'Eventos',t:'Ideas para actividades del año escolar',b:'Torneos, ferias, charlas. ¿Qué les gustaría ver en el politécnico?',ts:now-1*H,v:{},cm:[]}]};
+{id:'p1',uid:'u0',c:'🤣burlas',t:'¡Bienvenidos al Foro Peynado! 🎓',b:'Este es el espacio de los estudiantes del Politécnico. Crea tu cuenta, sube tu foto, publica y comenta. Respeta a todos.',ts:now-5*H,v:{},cm:[]},
+{id:'p2',uid:'u0',c:'🔪puyas',t:'¿Cómo se organizan para estudiar en grupo?',b:'Cuenten sus trucos: horarios, apps, lugares… Todo ayuda antes de los exámenes.',ts:now-3*H,v:{},cm:[]},
+{id:'p3',uid:'u0',c:'❤️amor/relaciones',t:'Ideas para actividades del año escolar',b:'Torneos, ferias, charlas. ¿Qué les gustaría ver en el politécnico?',ts:now-1*H,v:{},cm:[]}]};
 /* Normalizar datos guardados para evitar errores si una versión anterior dejó campos incompletos. */
 if(!db || typeof db!=='object' || Array.isArray(db)) db={};
 db.users=Array.isArray(db.users)?db.users:[];
@@ -275,6 +276,7 @@ db.fr=db.fr&&typeof db.fr==='object'&&!Array.isArray(db.fr)?db.fr:{};
 db.blocks=db.blocks&&typeof db.blocks==='object'&&!Array.isArray(db.blocks)?db.blocks:{};
 db.users=db.users.filter(u=>u&&typeof u==='object').map(u=>({...u,name:String(u.name||'Anónimo'),av:u.av||''}));
 db.posts=db.posts.filter(p=>p&&typeof p==='object').map(p=>({...p,t:String(p.t||''),b:String(p.b||''),v:p.v&&typeof p.v==='object'?p.v:{},cm:Array.isArray(p.cm)?p.cm.filter(c=>c&&typeof c==='object'):[],r:p.r&&typeof p.r==='object'?p.r:{}}));
+db.posts.forEach(p=>{p.c=catName(p.c)});
 db.stories=db.stories.filter(x=>x&&typeof x==='object').map(x=>({...x,r:x.r&&typeof x.r==='object'?x.r:{}}));
 db.chats=db.chats.filter(c=>c&&typeof c==='object').map(c=>({...c,m:Array.isArray(c.m)?c.m:[],msgs:Array.isArray(c.msgs)?c.msgs:[]}));
 if(!db.users.some(u=>u.id==='u0') && !localStorage.getItem('fp1')) db.users.unshift({id:'u0',name:'Moderación',email:'',h:'',av:''});
@@ -667,7 +669,7 @@ const ru=(id,o)=>{const x=OBJ[id];if(x){for(const k in x)delete x[k];Object.assi
 function rebuild(){const R=Object.values(STORE).filter(r=>!r.deleted),by=k=>R.filter(r=>r.kind===k),me=db.me,ts=(a,b)=>(a.data.ts||0)-(b.data.ts||0);
 db.users=by('user').map(r=>ru(r.id,{id:r.id,name:r.data.name,av:r.data.av||'',nc:r.data.nc||0}));
 const pm={},sm={},cm={},cmap={};
-db.posts=by('post').map(r=>{const p=ru(r.id,{id:r.id,uid:r.owner,c:r.data.c,t:r.data.t,b:r.data.b||'',ts:r.data.ts||0,v:{},cm:[],r:{},pinned:!!r.data.pinned,reportOverride:r.data.reportOverride||''});if(r.data.m)p.m=r.data.m;pm[p.id]=p;return p});
+db.posts=by('post').map(r=>{const p=ru(r.id,{id:r.id,uid:r.owner,c:catName(r.data.c),t:r.data.t,b:r.data.b||'',ts:r.data.ts||0,v:{},cm:[],r:{},pinned:!!r.data.pinned,reportOverride:r.data.reportOverride||''});if(r.data.m)p.m=r.data.m;pm[p.id]=p;return p});
 by('vote').forEach(r=>{const p=pm[r.data.p];if(p&&r.owner)p.v[r.owner]=r.data.d});
 by('cm').sort(ts).forEach(r=>{const p=pm[r.data.p];if(p){const c={id:r.id,uid:r.owner||null,g:r.data.n||undefined,t:r.data.t,ts:r.data.ts||0,parent:r.data.parent||undefined,likes:{},r:{},reportOverride:r.data.reportOverride||''};if(r.data.m)c.m=r.data.m;p.cm.push(c);cmap[c.id]=c}});by('clike').forEach(r=>{const p=pm[r.data.p],c=p&&p.cm.find(x=>x.id===r.data.c);if(c&&r.owner){c.likes=c.likes||{};c.likes[r.owner]=1}});
 db.stories=by('story').map(r=>{const s=ru(r.id,{id:r.id,uid:r.owner,m:r.data.m,cap:r.data.cap||'',ts:r.data.ts||0,r:{},pinned:!!r.data.pinned,reportOverride:r.data.reportOverride||''});sm[s.id]=s;return s});
