@@ -220,7 +220,21 @@ header .gear[data-a="chat"]{display:none}
 #bn button.c{flex:none;margin-left:6px;margin-right:6px}
 }
 @media(max-width:380px){.logo b{font-size:14px}.pn small{display:none}.act .ib{padding:5px 9px}}
-.reply-compose-modal{align-items:end;padding:0;background:#0007}.reply-compose-modal .box{width:100%;max-width:none;border-top:1px solid var(--bd);border-radius:18px 18px 0 0;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));max-height:45vh;overflow:visible;animation:replyUp .18s ease-out}.reply-sheet{width:100%;max-width:760px;margin:0 auto}.reply-handle{width:38px;height:4px;border-radius:9px;background:var(--bd);margin:0 auto 12px}.reply-title{font-size:13px;color:var(--mut);margin:0 0 8px}.reply-compose-modal #replyComposer{display:flex;align-items:flex-end;gap:8px}.reply-compose-modal #replyBody{flex:1;min-width:0;resize:none;min-height:42px;max-height:120px;border-radius:22px;padding:10px 15px;line-height:1.4}.reply-compose-modal #replyComposer .bp{min-height:42px;border-radius:22px;padding:8px 17px;white-space:nowrap}@keyframes replyUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style></head><body>
+.reply-compose-modal{align-items:end;padding:0;background:#0007}.reply-compose-modal .box{width:100%;max-width:none;border-top:1px solid var(--bd);border-radius:18px 18px 0 0;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));max-height:45vh;overflow:visible;animation:replyUp .18s ease-out}.reply-sheet{width:100%;max-width:760px;margin:0 auto}.reply-handle{width:38px;height:4px;border-radius:9px;background:var(--bd);margin:0 auto 12px}.reply-title{font-size:13px;color:var(--mut);margin:0 0 8px}.reply-compose-modal #replyComposer{display:flex;align-items:flex-end;gap:8px}.reply-compose-modal #replyBody{flex:1;min-width:0;resize:none;min-height:42px;max-height:120px;border-radius:22px;padding:10px 15px;line-height:1.4}.reply-compose-modal #replyComposer .bp{min-height:42px;border-radius:22px;padding:8px 17px;white-space:nowrap}@keyframes replyUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+/* Tutorial inicial: botón de crear, solo en móviles */
+#fp-create-tour{position:fixed;inset:0;z-index:9999;display:none;font-family:inherit}
+#fp-create-tour .fp-tour-shade{position:fixed;width:62px;height:62px;border:4px solid var(--y);border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,.78);pointer-events:none;animation:fpTourPulse 1.5s ease-in-out infinite}
+#fp-create-tour .fp-tour-card{position:fixed;left:18px;right:18px;bottom:calc(105px + env(safe-area-inset-bottom,0px));max-width:420px;margin:0 auto;background:var(--card);color:var(--tx);border:2px solid var(--y);border-radius:16px;padding:18px;box-shadow:0 12px 35px #0005}
+#fp-create-tour .fp-tour-kicker{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--bl);text-transform:uppercase;margin-bottom:5px}
+#fp-create-tour h2{font-size:20px;line-height:1.2;margin:0 0 8px}
+#fp-create-tour p{font-size:14px;margin:0 0 15px;line-height:1.5}
+#fp-create-tour .fp-tour-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#fp-create-tour .fp-tour-actions button{min-height:40px}
+#fp-create-tour .fp-tour-skip{background:transparent;color:var(--mut);padding-left:0;padding-right:0}
+@keyframes fpTourPulse{0%,100%{transform:scale(1);border-color:var(--y)}50%{transform:scale(1.08);border-color:#fff}}
+@media(min-width:801px){#fp-create-tour{display:none!important}}
+@media(max-width:800px){#fp-create-tour.fp-tour-visible{display:block}}
+</style></head><body>
 <script>
 /* Red de seguridad: corre aparte para avisar aunque el script principal falle */
 (function(){var V='2026.10.09-c',errs=[];window.__fpv=V;
@@ -726,4 +740,27 @@ try{render()}catch(e){return showErr(e)}try{checkNotif()}catch(e){}}
 /*CLOUD-END*/
 
 boot();
-</script><script src="./admin-panel.js" defer></script>\n</body></html>
+</script><script src="./admin-panel.js" defer>
+/* Guía de primera visita para el botón + de la navegación móvil */
+(function(){
+ const KEY='fp_mobile_create_tour_seen_v1';
+ function showCreateTour(){
+  if(window.innerWidth>800||localStorage.getItem(KEY)==='1')return;
+  const nav=document.getElementById('bn'),target=nav&&nav.querySelector('button[data-a="new"]');
+  if(!target)return;
+  let tour=document.getElementById('fp-create-tour');
+  if(!tour){tour=document.createElement('div');tour.id='fp-create-tour';tour.setAttribute('role','dialog');tour.setAttribute('aria-modal','true');tour.setAttribute('aria-labelledby','fp-tour-title');tour.innerHTML='<div class="fp-tour-shade" aria-hidden="true"></div><section class="fp-tour-card"><div class="fp-tour-kicker">Guía rápida · 1 de 1</div><h2 id="fp-tour-title">¿Para qué sirve el botón +?</h2><p>Este círculo de la parte inferior te permite <strong>crear una publicación</strong>. Tócalo para compartir algo con el foro, escribir un título y añadir texto, fotos o videos.</p><div class="fp-tour-actions"><button type="button" class="fp-tour-skip" data-fp-tour-close>Ahora no</button><button type="button" class="bp" data-fp-tour-close>¡Entendido!</button></div></section>';document.body.appendChild(tour);
+   tour.querySelectorAll('[data-fp-tour-close]').forEach(b=>b.addEventListener('click',closeCreateTour));
+   tour.addEventListener('click',e=>{if(e.target===tour)closeCreateTour()});
+   document.addEventListener('keydown',onTourKey);
+  }
+  const r=target.getBoundingClientRect(),spot=tour.querySelector('.fp-tour-shade');
+  spot.style.left=(r.left+r.width/2-31)+'px';spot.style.top=(r.top+r.height/2-31)+'px';
+  tour.classList.add('fp-tour-visible');
+ }
+ function closeCreateTour(){const tour=document.getElementById('fp-create-tour');if(tour)tour.classList.remove('fp-tour-visible');try{localStorage.setItem(KEY,'1')}catch(e){}document.removeEventListener('keydown',onTourKey)}
+ function onTourKey(e){if(e.key==='Escape')closeCreateTour()}
+ window.addEventListener('resize',()=>{const tour=document.getElementById('fp-create-tour');if(window.innerWidth>800&&tour)tour.classList.remove('fp-tour-visible');else if(tour&&tour.classList.contains('fp-tour-visible')){const target=document.querySelector('#bn button[data-a="new"]');if(target){const r=target.getBoundingClientRect(),spot=tour.querySelector('.fp-tour-shade');spot.style.left=(r.left+r.width/2-31)+'px';spot.style.top=(r.top+r.height/2-31)+'px'}}});
+ setTimeout(showCreateTour,900);
+})();
+</script>\n</body></html>
