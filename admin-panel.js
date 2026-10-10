@@ -4,7 +4,7 @@
   const KEY = 'sb_publishable_XR5_4gJ1knSfOYoNIVSKCg_TB2y3ah4';
   const ADMIN_ID = '8b21f591-f99b-4018-bb82-bc3ebe08e142';
   const ADMIN_EMAIL = 'docmisterio52@gmail.com';
-  let state = { view: 'overview', stats: null, users: [], content: [], busy: false };
+  let state = { view: 'overview', stats: null, users: [], content: [], reported: [], busy: false };
   const $ = (s, root=document) => root.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = s => { if (!s) return '—'; const d = new Date(s); return Number.isNaN(+d) ? '—' : d.toLocaleString(); };
@@ -95,7 +95,7 @@
     if(s?.u?.id!==ADMIN_ID || String(s.u?.email||'').toLowerCase()!==ADMIN_EMAIL){toast('Inicia sesión con la cuenta administradora.',true);return;}
     if ($('#fp-admin-overlay')) return;
     const o=document.createElement('div');o.id='fp-admin-overlay';
-    o.innerHTML='<section id="fp-admin-panel" role="dialog" aria-modal="true" aria-label="Panel de administración"><div class="fpa-head"><div><h2>Panel de administración</h2><div class="fpa-muted">Foro Peynado · acceso restringido</div></div><button class="fpa-close" data-fpa="close" aria-label="Cerrar">✕</button></div><div class="fpa-tabs"><button class="fpa-tab active" data-view="overview">Resumen</button><button class="fpa-tab" data-view="users">Usuarios</button><button class="fpa-tab" data-view="content">Contenido</button><button class="fpa-tab" data-view="trash">Papelera</button></div><div class="fpa-body"><div class="fpa-empty">Comprobando autorización…</div></div></section>';
+    o.innerHTML='<section id="fp-admin-panel" role="dialog" aria-modal="true" aria-label="Panel de administración"><div class="fpa-head"><div><h2>Panel de administración</h2><div class="fpa-muted">Foro Peynado · acceso restringido</div></div><button class="fpa-close" data-fpa="close" aria-label="Cerrar">✕</button></div><div class="fpa-tabs"><button class="fpa-tab active" data-view="overview">Resumen</button><button class="fpa-tab" data-view="users">Usuarios</button><button class="fpa-tab" data-view="content">Contenido</button><button class="fpa-tab" data-view="reports">Reportes</button><button class="fpa-tab" data-view="trash">Papelera</button></div><div class="fpa-body"><div class="fpa-empty">Comprobando autorización…</div></div></section>';
     o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-fpa="close"]'))o.remove();});
     o.addEventListener('click',e=>{const t=e.target.closest('[data-view]');if(t){state.view=t.dataset.view;drawTabs();loadView();}});
     o.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(b)handleAction(b);});
@@ -111,6 +111,7 @@
     try{
       if(state.view==='overview'){const r=await api('overview');state.stats=r.stats||{};body.innerHTML=overviewHtml();}
       else if(state.view==='users'){const r=await api('users');state.users=r.users||[];renderUsers();}
+      else if(state.view==='reports'){const r=await api('reports');state.reported=r.items||[];renderReports();}
       else {const r=await api('content');state.content=r.content||[];renderContent();}
     }catch(e){body.innerHTML='<div class="fpa-card"><b>No se pudo cargar la sección</b><p>'+esc(e.message)+'</p><button class="fpa-btn" data-action="retry">Reintentar</button></div>';}
   }
@@ -131,10 +132,12 @@
     body.innerHTML='<div class="fpa-toolbar"><input id="fpa-search-content" class="fpa-input" placeholder="Buscar texto, ID o propietario" value="'+esc(q)+'"><select id="fpa-content-filter" class="fpa-select" style="max-width:170px">'+kinds.map(k=>'<option value="'+k+'" '+(f===k?'selected':'')+'>'+(k==='all'?'Todos los tipos':({post:'Publicaciones',story:'Historias',cm:'Comentarios',rep:'Reportes',msg:'Mensajes'}[k]||k))+'</option>').join('')+'</select><button class="fpa-btn" data-action="refresh">Actualizar</button></div><div class="fpa-tablewrap"><table class="fpa-table"><thead><tr><th>Tipo</th><th>Contenido</th><th>ID / propietario</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody>'+list.map(c=>'<tr><td>'+esc(({post:'Publicación',story:'Historia',cm:'Comentario',rep:'Reporte',msg:'Mensaje'}[c.kind]||c.kind))+'</td><td>'+esc(String(contentTitle(c)).slice(0,240))+(String(contentTitle(c)).length>240?'…':'')+'</td><td><code>'+esc(c.id)+'</code><div class="fpa-muted">'+esc(contentOwner(c))+'</div></td><td>'+esc(fmt(c.updated_at))+'</td><td><div class="fpa-actions">'+(trash?'<button class="fpa-btn" data-action="restore" data-id="'+esc(c.id)+'">Restaurar</button><button class="fpa-btn danger" data-action="permanent" data-id="'+esc(c.id)+'">Eliminar definitivamente</button>':'<button class="fpa-btn danger" data-action="soft-delete" data-id="'+esc(c.id)+'">Enviar a papelera</button>')+'</div></td></tr>').join('')+'</tbody></table></div><p class="fpa-muted">'+list.length+' elementos'+(trash?' en la papelera':'')+'</p>';
     if(!list.length)body.insertAdjacentHTML('beforeend','<div class="fpa-empty">No hay elementos para mostrar.</div>'); if(hadFocus){const inp=$('#fpa-search-content');inp?.focus();try{inp.setSelectionRange(caret,caret)}catch(_){}}
   }
+  function renderReports(){const body=$('.fpa-body');if(!body)return;const list=state.reported||[];body.innerHTML='<div class="fpa-toolbar"><span class="fpa-muted">Contenido reportado. Las publicaciones se ocultan con 3 reportes y los comentarios con 10, salvo decisión de administración.</span><button class="fpa-btn" data-action="refresh">Actualizar</button></div>'+(list.length?list.map(x=>'<div class="fpa-card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><span class="fpa-badge warn">'+esc(x.reports)+' reportes</span> <b>'+esc(({post:'Publicación',story:'Historia',cm:'Comentario'}[x.kind]||x.kind))+'</b><div class="fpa-muted">ID: '+esc(x.id)+' · Autor: '+esc(x.owner||'—')+'</div></div><div class="fpa-actions">'+(x.kind==='post'?'<button class="fpa-btn" data-action="'+(x.pinned?'unpin':'pin')+'" data-id="'+esc(x.id)+'">'+(x.pinned?'Desfijar':'Fijar')+'</button>':'')+'<button class="fpa-btn" data-action="'+(x.visibility==='hidden'?'report-show':'report-hide')+'" data-id="'+esc(x.id)+'">'+(x.visibility==='hidden'?'Volver visible':'Ocultar')+'</button></div></div><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(x.title||'(sin texto)')+'</p><div class="fpa-muted">Estado: '+esc(x.visibility==='hidden'?'Oculto por administración':x.autoHidden?'Oculto por reportes':'Visible')+'</div></div>').join(''):'<div class="fpa-empty">No hay contenido reportado.</div>');}
   async function handleAction(b){
     const a=b.dataset.action,id=b.dataset.id;
     try{
       if(a==='retry'||a==='refresh'){await loadView();return;}
+      if(a==='report-show'||a==='report-hide'||a==='pin'||a==='unpin'){b.disabled=true;const visibility=a==='report-show'?'visible':a==='report-hide'?'hidden':undefined;const pinned=a==='pin'?true:a==='unpin'?false:undefined;await api('moderate_content',{id,visibility,pinned});toast(a==='report-show'?'Contenido visible de nuevo.':a==='report-hide'?'Contenido ocultado.':a==='pin'?'Publicación fijada.':'Publicación desfijada.');await loadView();return;}
       if(a==='ban'){showBanForm(id,b.dataset.name||'usuario');return;}
       if(a==='unban'){if(!confirm('¿Retirar la sanción de esta cuenta?'))return;b.disabled=true;await api('unban',{userId:id});toast('Sanción retirada.');await loadView();return;}
       if(a==='soft-delete'){if(!confirm('¿Enviar este contenido a la papelera? Se podrá restaurar después.'))return;b.disabled=true;await api('soft_delete',{id});toast('Contenido enviado a la papelera.');await loadView();return;}
@@ -156,6 +159,7 @@
     $('#fpa-ban-type').addEventListener('change',()=>{$('#fpa-ban-until-wrap').style.display=$('#fpa-ban-type').value==='temporary'?'':'none';});
     const cancel=$('[data-action="cancel-ban"]');cancel.addEventListener('click',()=>$('#fpa-ban-form')?.closest('.fpa-card')?.remove());
   }
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-a="pin"]');if(!b)return;e.preventDefault();e.stopPropagation();const id=b.dataset.id,was=b.title==='Desfijar publicación';b.disabled=true;api('moderate_content',{id,pinned:!was}).then(()=>{toast(was?'Publicación desfijada.':'Publicación fijada.');location.reload()}).catch(err=>{toast(err.message||'No se pudo fijar la publicación.',true);b.disabled=false;});},true);
   document.addEventListener('DOMContentLoaded',install);
   install();
   setInterval(syncButton,2500);
