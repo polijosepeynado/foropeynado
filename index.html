@@ -740,7 +740,7 @@ try{render()}catch(e){return showErr(e)}try{checkNotif()}catch(e){}}
 /*CLOUD-END*/
 
 boot();
-</script><script src="./admin-panel.js" defer>
+
 /* Guía de primera visita para el botón + de la navegación móvil */
 (function(){
  const KEY='fp_mobile_create_tour_seen_v1';
@@ -763,4 +763,5 @@ boot();
  window.addEventListener('resize',()=>{const tour=document.getElementById('fp-create-tour');if(window.innerWidth>800&&tour)tour.classList.remove('fp-tour-visible');else if(tour&&tour.classList.contains('fp-tour-visible')){const target=document.querySelector('#bn button[data-a="new"]');if(target){const r=target.getBoundingClientRect(),spot=tour.querySelector('.fp-tour-shade');spot.style.left=(r.left+r.width/2-31)+'px';spot.style.top=(r.top+r.height/2-31)+'px'}}});
  setTimeout(showCreateTour,900);
 })();
-</script>\n</body></html>
+
+</script><script src="./admin-panel.js" defer></script>\n</body></html>
