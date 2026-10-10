@@ -744,26 +744,37 @@ try{render()}catch(e){return showErr(e)}try{checkNotif()}catch(e){}}
 
 boot();
 
-/* Guía de primera visita para el botón + de la navegación móvil */
+/* Tutorial de bienvenida: una vez por navegador en móviles, con o sin cuenta. */
 (function(){
- const KEY='fp_mobile_create_tour_seen_v1';
+ const KEY='fp_mobile_create_tour_seen_v2';
+ function alreadySeen(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
  function showCreateTour(){
-  if(window.innerWidth>800||localStorage.getItem(KEY)==='1')return;
+  if(window.innerWidth>800||alreadySeen())return;
   const nav=document.getElementById('bn'),target=nav&&nav.querySelector('button[data-a="new"]');
-  if(!target)return;
+  if(!target){setTimeout(showCreateTour,500);return}
   let tour=document.getElementById('fp-create-tour');
-  if(!tour){tour=document.createElement('div');tour.id='fp-create-tour';tour.setAttribute('role','dialog');tour.setAttribute('aria-modal','true');tour.setAttribute('aria-labelledby','fp-tour-title');tour.innerHTML='<div class="fp-tour-shade" aria-hidden="true"></div><section class="fp-tour-card"><div class="fp-tour-kicker">Guía rápida · 1 de 1</div><h2 id="fp-tour-title">¿Para qué sirve el botón +?</h2><p>Este círculo de la parte inferior te permite <strong>crear una publicación</strong>. Tócalo para compartir algo con el foro, escribir un título y añadir texto, fotos o videos.</p><div class="fp-tour-actions"><button type="button" class="fp-tour-skip" data-fp-tour-close>Ahora no</button><button type="button" class="bp" data-fp-tour-close>¡Entendido!</button></div></section>';document.body.appendChild(tour);
-   tour.querySelectorAll('[data-fp-tour-close]').forEach(b=>b.addEventListener('click',closeCreateTour));
-   tour.addEventListener('click',e=>{if(e.target===tour)closeCreateTour()});
-   document.addEventListener('keydown',onTourKey);
+  if(!tour){
+   tour=document.createElement('div');tour.id='fp-create-tour';tour.setAttribute('role','dialog');tour.setAttribute('aria-modal','true');tour.setAttribute('aria-labelledby','fp-tour-title');
+   tour.innerHTML='<div class="fp-tour-shade" aria-hidden="true"></div><section class="fp-tour-card"><div class="fp-tour-kicker">Guía rápida · 1 de 1</div><h2 id="fp-tour-title">¿Para qué sirve el botón +?</h2><p>Este círculo de la parte inferior te permite <strong>crear una publicación</strong>. Tócalo para compartir algo con el foro, escribir un título y añadir texto, fotos o videos.</p><div class="fp-tour-actions"><button type="button" class="bp" data-fp-tour-close>¡Entendido!</button></div></section>';
+   document.body.appendChild(tour);
+   tour.querySelector('[data-fp-tour-close]').addEventListener('click',closeCreateTour);
+   tour.addEventListener('click',e=>{if(!e.target.closest('[data-fp-tour-close]')){e.preventDefault();e.stopPropagation()}});
+   tour.addEventListener('pointerdown',e=>{if(!e.target.closest('[data-fp-tour-close]')){e.preventDefault();e.stopPropagation()}});
   }
   const r=target.getBoundingClientRect(),spot=tour.querySelector('.fp-tour-shade');
   spot.style.left=(r.left+r.width/2-31)+'px';spot.style.top=(r.top+r.height/2-31)+'px';
   tour.classList.add('fp-tour-visible');
  }
- function closeCreateTour(){const tour=document.getElementById('fp-create-tour');if(tour)tour.classList.remove('fp-tour-visible');try{localStorage.setItem(KEY,'1')}catch(e){}document.removeEventListener('keydown',onTourKey)}
- function onTourKey(e){if(e.key==='Escape')closeCreateTour()}
- window.addEventListener('resize',()=>{const tour=document.getElementById('fp-create-tour');if(window.innerWidth>800&&tour)tour.classList.remove('fp-tour-visible');else if(tour&&tour.classList.contains('fp-tour-visible')){const target=document.querySelector('#bn button[data-a="new"]');if(target){const r=target.getBoundingClientRect(),spot=tour.querySelector('.fp-tour-shade');spot.style.left=(r.left+r.width/2-31)+'px';spot.style.top=(r.top+r.height/2-31)+'px'}}});
+ function closeCreateTour(){
+  const tour=document.getElementById('fp-create-tour');
+  if(tour)tour.classList.remove('fp-tour-visible');
+  try{localStorage.setItem(KEY,'1')}catch(e){}
+ }
+ window.addEventListener('resize',()=>{
+  const tour=document.getElementById('fp-create-tour');
+  if(window.innerWidth>800&&tour)tour.classList.remove('fp-tour-visible');
+  else if(tour&&!alreadySeen()){const target=document.querySelector('#bn button[data-a="new"]');if(target){const r=target.getBoundingClientRect(),spot=tour.querySelector('.fp-tour-shade');spot.style.left=(r.left+r.width/2-31)+'px';spot.style.top=(r.top+r.height/2-31)+'px';tour.classList.add('fp-tour-visible')}}
+ });
  setTimeout(showCreateTour,900);
 })();
 
